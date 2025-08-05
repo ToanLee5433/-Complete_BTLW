@@ -210,9 +210,11 @@
 .login-logo {
   height: 80px;
   width: auto;
-  filter: brightness(0) invert(1);
   position: relative;
   z-index: 1;
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
 }
 
 /* Login Form Styles - Government Standard */
@@ -824,6 +826,9 @@
 
 .article-form-container {
   padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .article-form {
@@ -890,6 +895,67 @@
 }
 
 .form-select:focus {
+  outline: none;
+  border-color: #d90000;
+  box-shadow: 0 0 0 2px rgba(217, 0, 0, 0.1);
+}
+
+/* Image Upload Container Styles */
+.image-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.image-type-tabs {
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f8f9fa;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: #f8f9fa;
+  color: #666;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: Arial, sans-serif;
+}
+
+.tab-button:hover {
+  background: #e9ecef;
+  color: #333;
+}
+
+.tab-button.active {
+  background: #d90000;
+  color: white;
+}
+
+.file-upload-section,
+.url-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+  background: white;
+  font-family: Arial, sans-serif;
+}
+
+.form-input:focus {
   outline: none;
   border-color: #d90000;
   box-shadow: 0 0 0 2px rgba(217, 0, 0, 0.1);

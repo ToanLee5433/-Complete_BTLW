@@ -32,7 +32,10 @@ export const AdminLogin: React.FC<LoginProps> = ({ onLogin }) => {
     <div className="login-container">
       <div className="login-background">
         <div className="government-seal">
-          <img src="/images/logo.png" alt="Logo Bộ Công An" className="login-logo" />
+          <img src="/images/logo.png" alt="Logo Bộ Công An" className="login-logo" onError={(e) => {
+            console.log('Logo load error, trying alternative path');
+            (e.target as HTMLImageElement).src = './images/logo.png';
+          }} />
         </div>
         
         <form className="login-form" onSubmit={handleSubmit}>

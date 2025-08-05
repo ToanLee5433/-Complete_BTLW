@@ -96,7 +96,7 @@ export default function CategorySection() {
             // Add new articles to the beginning of existing articles
             grouped[categoryName].unshift({
               title: article.title,
-              img: article.imageUrl ? `http://localhost:8080${article.imageUrl}` : undefined,
+              img: article.imageUrl ? (article.imageUrl.startsWith('http') ? article.imageUrl : `http://localhost:8080${article.imageUrl}`) : undefined,
               id: article.id,
               isFromAPI: true
             });

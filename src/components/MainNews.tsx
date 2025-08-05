@@ -15,15 +15,16 @@ interface Article {
 
 export default function MainNews() {
   const navigate = useNavigate();
-  const [latestArticle, setLatestArticle] = useState<Article | null>(null);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchLatestArticle();
+    fetchArticles();
     
     // Listen for article updates
     const handleArticleUpdate = () => {
-      fetchLatestArticle();
+      fetchArticles();
     };
     
     window.addEventListener('articleUpdated', handleArticleUpdate);
@@ -33,25 +34,66 @@ export default function MainNews() {
     };
   }, []);
 
-  const fetchLatestArticle = async () => {
+  // Auto-cycle through articles every 10 seconds
+  useEffect(() => {
+    console.log('MainNews: Setting up auto-cycle, articles count:', articles.length);
+    if (articles.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prevIndex) => {
+          const newIndex = (prevIndex + 1) % articles.length;
+          console.log('MainNews: Auto-cycling from article', prevIndex, 'to', newIndex);
+          return newIndex;
+        });
+      }, 10000); // 10 seconds
+
+      return () => {
+        console.log('MainNews: Clearing auto-cycle interval');
+        clearInterval(interval);
+      };
+    }
+  }, [articles.length]);
+
+  const fetchArticles = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/public/articles?page=0&size=1');
+      console.log('MainNews: Fetching articles...');
+      // Fetch 24 latest articles for rotation
+      const response = await fetch('http://localhost:8080/api/public/articles?page=0&size=24', {
+        headers: {
+          'Accept': 'application/json; charset=UTF-8',
+          'Content-Type': 'application/json; charset=UTF-8'
+        }
+      });
       if (response.ok) {
         const data = await response.json();
-        if (data.content && data.content.length > 0) {
-          setLatestArticle(data.content[0]);
+        console.log('MainNews: Fetched articles data:', data);
+        console.log('MainNews: Data has articles property:', !!data.articles);
+        console.log('MainNews: Articles array length:', data.articles ? data.articles.length : 0);
+        if (data.articles && data.articles.length > 0) {
+          console.log('MainNews: First article:', data.articles[0]);
+          setArticles(data.articles);
+          setCurrentIndex(0); // Reset to first article when articles update
+          console.log('MainNews: Set articles count:', data.articles.length);
+        } else {
+          // Nếu không có dữ liệu từ API
+          console.log('MainNews: No articles found in API response');
+          setArticles([]);
         }
+      } else {
+        console.error('MainNews: Failed to fetch articles, status:', response.status);
+        setArticles([]);
       }
     } catch (error) {
-      console.error('Error fetching latest article:', error);
+      console.error('Error fetching articles:', error);
+      setArticles([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleClick = () => {
-    if (latestArticle) {
-      navigate(`/tin-tuc-su-kien/bai-viet/${latestArticle.id}`);
+    const currentArticle = articles[currentIndex];
+    if (currentArticle) {
+      navigate(`/tin-tuc-su-kien/bai-viet/${currentArticle.id}`);
     }
   };
 
@@ -70,37 +112,52 @@ export default function MainNews() {
     );
   }
 
-  // Nếu không có bài viết từ API, hiển thị bài viết mặc định
-  if (!latestArticle) {
+  // Nếu không có bài viết từ API, hiển thị thông báo
+  if (!articles.length) {
     return (
-      <div className="main-news" onClick={() => navigate('/tin-tuc-su-kien/bai-viet/cong-an-tinh-nghe-an-khan-truong-tich-cuc-giup-nhan-dan-khac-phuc-hau-qua-con-bao-so-3')} style={{ cursor: "pointer" }}>
+      <div className="main-news">
         <img 
-          src="https://bocongan.gov.vn/knd/tt/PublishingImages/NguyenPhuongAnh/2025/7/gen-h-xa%20anh%20son1.jpg?RenditionID=7" 
+          src="/images/botrong_4sao1.jpg" 
           alt="Ảnh tin nổi bật"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/images/botrong_4sao1.jpg";
-          }}
         />
         <div className="news-content">
-          <h2>Công an tỉnh Nghệ An khẩn trương, tích cực giúp Nhân dân khắc phục hậu quả cơn bão số 3</h2>
-          <p>Trước diễn biến phức tạp của mưa lũ do ảnh hưởng hoàn lưu bão số 3 (bão Wipha), Công an tỉnh Nghệ An đã và đang cảnh minh hỗ trợ Nhân dân khắc phục hậu quả, sớm ổn định cuộc sống.</p>
+          <h2>Không có bài viết nào</h2>
+          <p>Hiện tại chưa có bài viết nào được đăng. Vui lòng quay lại sau.</p>
         </div>
       </div>
     );
   }
 
+  const currentArticle = articles[currentIndex];
+
   return (
     <div className="main-news" onClick={handleClick} style={{ cursor: "pointer" }}>
       <img
-        src={latestArticle.imageUrl ? `http://localhost:8080${latestArticle.imageUrl}` : "/images/botrong_4sao1.jpg"}
+        src={currentArticle.imageUrl ? (currentArticle.imageUrl.startsWith('http') ? currentArticle.imageUrl : `http://localhost:8080${currentArticle.imageUrl}`) : "/images/botrong_4sao1.jpg"}
         alt="Ảnh tin nổi bật"
         onError={(e) => {
           (e.target as HTMLImageElement).src = "/images/botrong_4sao1.jpg";
         }}
       />
       <div className="news-content">
-        <h2>{latestArticle.title}</h2>
-        <p>{latestArticle.summary || latestArticle.content.substring(0, 200) + '...'}</p>
+        <h2>{currentArticle.title}</h2>
+        <p>{currentArticle.summary || (currentArticle.content ? currentArticle.content.substring(0, 200) + '...' : 'Không có tóm tắt')}</p>
+        
+        {/* Indicator dots to show current article */}
+        {articles.length > 1 && (
+          <div className="article-indicators">
+            {articles.map((_, index) => (
+              <span
+                key={index}
+                className={`indicator-dot ${index === currentIndex ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentIndex(index);
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

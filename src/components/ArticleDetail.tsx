@@ -141,9 +141,12 @@ export default function ArticleDetail({ articleId }: Props) {
       {article.imageUrl && (
         <div className="article-image">
           <img 
-            src={`http://localhost:8080${article.imageUrl}`} 
+            src={article.imageUrl.startsWith('http') ? article.imageUrl : `http://localhost:8080${article.imageUrl}`} 
             alt={article.title}
+            onLoad={() => console.log('Image loaded successfully:', article.imageUrl)}
             onError={(e) => {
+              console.log('Image failed to load:', article.imageUrl);
+              console.log('Computed src:', article.imageUrl.startsWith('http') ? article.imageUrl : `http://localhost:8080${article.imageUrl}`);
               (e.target as HTMLImageElement).style.display = 'none';
             }}
           />

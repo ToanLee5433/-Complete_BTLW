@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Editor } from '@tinymce/tinymce-react';
 import './Admin.css';
 
 interface Article {
@@ -112,8 +113,11 @@ export const EditArticle: React.FC<EditArticleProps> = ({ articleId, onClose, on
       formDataToSend.append('category', formData.category);
       formDataToSend.append('summary', formData.summary || '');
 
+      // Xử lý ảnh: ưu tiên image file trước, nếu không có thì dùng imageUrl
       if (imageFile) {
         formDataToSend.append('image', imageFile);
+      } else if (formData.imageUrl.trim()) {
+        formDataToSend.append('imageUrl', formData.imageUrl);
       }
 
       const response = await fetch(`http://localhost:8080/api/admin/articles/${articleId}`, {
@@ -245,15 +249,55 @@ export const EditArticle: React.FC<EditArticleProps> = ({ articleId, onClose, on
 
           <div className="form-group">
             <label htmlFor="content">Nội dung *</label>
-            <textarea
-              id="content"
-              name="content"
-              value={formData.content}
-              onChange={handleInputChange}
-              rows={15}
-              required
-              placeholder="Nhập nội dung bài viết..."
-            />
+            <div className="editor-container">
+              <Editor
+                apiKey="n3kxhrveca1is968o5bxlw315g5060dra8v1a7wofh0jla3n"
+                value={formData.content}
+                onEditorChange={(content: string) => setFormData({...formData, content})}
+                init={{
+                  height: 600,
+                  menubar: false,
+                  // Khôi phục plugin image để có thể thêm ảnh vào nội dung
+                  plugins: 'link lists image',
+                  // Khôi phục nút image trong toolbar
+                  toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | bullist numlist | link | image',
+                  content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
+                  branding: false,
+                  // Cấu hình upload ảnh cho nội dung (riêng biệt với thumbnail)
+                  automatic_uploads: true,
+                  file_picker_callback: (callback: any, _value: any, meta: any) => {
+                    if (meta.filetype === 'image') {
+                      // Tạo input riêng biệt cho TinyMCE content images
+                      const input = document.createElement('input');
+                      input.setAttribute('type', 'file');
+                      input.setAttribute('accept', 'image/*');
+                      input.setAttribute('id', 'tinymce-edit-content-image-picker');
+                      input.style.display = 'none';
+                      document.body.appendChild(input);
+                      
+                      input.onchange = function() {
+                        const fileInput = this as HTMLInputElement;
+                        if (fileInput.files && fileInput.files[0]) {
+                          const file = fileInput.files[0];
+                          const reader = new FileReader();
+                          reader.onload = function() {
+                            callback(reader.result, { alt: file.name });
+                            document.body.removeChild(input);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      };
+                      input.click();
+                    }
+                  },
+                  setup: (editor: any) => {
+                    editor.on('init', () => {
+                      console.log('TinyMCE Edit initialized - image functions enabled for content');
+                    });
+                  }
+                }}
+              />
+            </div>
           </div>
 
           <div className="form-actions">
