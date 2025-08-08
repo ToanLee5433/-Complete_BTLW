@@ -19,9 +19,14 @@ interface ActivityItem {
   action: string;
   description: string;
   timestamp: string;
+  title?: string;
 }
 
-export const Dashboard: React.FC = () => {
+interface DashboardProps {
+  onNavigateToTab: (tab: string) => void;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToTab }) => {
   const [stats, setStats] = useState<DashboardStats>({
     totalArticles: 0,
     totalFeedbacks: 0,
@@ -34,6 +39,7 @@ export const Dashboard: React.FC = () => {
     recentActivity: []
   });
   const [loading, setLoading] = useState(true);
+  const [categoryView, setCategoryView] = useState<'first' | 'second'>('first');
 
   useEffect(() => {
     fetchDashboardStats();
@@ -44,63 +50,59 @@ export const Dashboard: React.FC = () => {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
       
-      // Fetch overall statistics
-      const [articlesResponse, feedbacksResponse] = await Promise.all([
-        fetch('http://localhost:8080/api/admin/articles', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch('http://localhost:8080/api/admin/feedbacks/statistics', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ]);
+      // Fetch all articles to get correct statistics
+      const allArticlesResponse = await fetch('http://localhost:8080/api/admin/articles?page=0&size=1000', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      const allArticlesData = await allArticlesResponse.json();
+      const allArticles = allArticlesData.articles || [];
+      
+      // Fetch recent articles for activity
+      const recentArticlesResponse = await fetch('http://localhost:8080/api/admin/articles?page=0&size=10', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      const recentArticlesData = await recentArticlesResponse.json();
+      const recentArticles = recentArticlesData.articles || [];
 
-      const articlesData = await articlesResponse.json();
+      // Fetch feedback statistics
+      const feedbacksResponse = await fetch('http://localhost:8080/api/admin/feedbacks/statistics', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
       const feedbackStats = await feedbacksResponse.json();
-
-      // Extract articles from the paginated response
-      const articles = articlesData.articles || [];
 
       // Calculate article statistics by category
       const articlesByCategory: { [key: string]: number } = {};
-      articles.forEach((article: any) => {
+      allArticles.forEach((article: any) => {
         const category = article.category;
         articlesByCategory[category] = (articlesByCategory[category] || 0) + 1;
       });
 
-      // Mock recent activity data (in real app, would come from backend)
-      const recentActivity: ActivityItem[] = [
-        {
-          id: 1,
-          type: 'article',
-          action: 'created',
-          description: 'Bài viết mới về chỉ đạo điều hành',
-          timestamp: new Date().toISOString()
-        },
-        {
-          id: 2,
-          type: 'feedback',
-          action: 'resolved',
-          description: 'Phản hồi từ công dân được xử lý',
-          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-        },
-        {
-          id: 3,
-          type: 'article',
-          action: 'updated',
-          description: 'Cập nhật bài viết về an ninh trật tự',
-          timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString()
-        }
-      ];
+      // Generate recent activity from real data
+      const recentActivity: ActivityItem[] = recentArticles.slice(0, 5).map((article: any) => ({
+        id: article.id,
+        type: 'article' as const,
+        action: article.updatedAt ? 'updated' : 'created',
+        description: article.title.length > 50 ? article.title.substring(0, 50) + '...' : article.title,
+        title: article.title,
+        timestamp: article.updatedAt || article.createdAt
+      }));
+
+      // Calculate today's articles
+      const today = new Date().toDateString();
+      const todayArticles = allArticles.filter((article: any) => 
+        new Date(article.createdAt).toDateString() === today
+      ).length;
 
       setStats({
-        totalArticles: articles.length,
+        totalArticles: allArticlesData.totalItems || allArticles.length,
         totalFeedbacks: feedbackStats.total || 0,
         pendingFeedbacks: feedbackStats.pending || 0,
         resolvedFeedbacks: feedbackStats.resolved || 0,
-        todayArticles: articles.filter((a: any) => 
-          new Date(a.createdAt).toDateString() === new Date().toDateString()
-        ).length,
-        todayFeedbacks: Math.floor(Math.random() * 10), // Mock data
+        todayArticles,
+        todayFeedbacks: feedbackStats.todayFeedbacks || 0,
         articlesByCategory,
         feedbacksByStatus: {
           pending: feedbackStats.pending || 0,
@@ -130,11 +132,14 @@ export const Dashboard: React.FC = () => {
 
   const getCategoryDisplayName = (category: string) => {
     const categoryNames: { [key: string]: string } = {
-      'INTRODUCE': 'Giới thiệu',
-      'NEWS_AND_EVENT': 'Tin tức & Sự kiện',
-      'VAN_BAN': 'Văn bản',
-      'FEEDBACK': 'Phản hồi',
-      'GALLERY': 'Thư viện ảnh'
+      'CHI_DAO_DIEU_HANH': 'Chỉ đạo điều hành',
+      'HOAT_DONG_BO_CONG_AN': 'Hoạt động Bộ Công an',
+      'HOAT_DONG_CONG_AN_DIA_PHUONG': 'Hoạt động Công an địa phương',
+      'AN_NINH_TRAT_TU': 'An ninh trật tự',
+      'DOI_NGOAI': 'Đối ngoại',
+      'HOAT_DONG_XA_HOI': 'Hoạt động xã hội',
+      'NGUOI_TOT_VIEC_TOT': 'Người tốt việc tốt',
+      'PHO_BIEN_GIAO_DUC_PHAP_LUAT': 'Phổ biến giáo dục pháp luật'
     };
     return categoryNames[category] || category;
   };
@@ -204,24 +209,35 @@ export const Dashboard: React.FC = () => {
         {/* Charts Section */}
         <div className="charts-section">
           <div className="chart-card">
-            <h3>Bài viết theo danh mục</h3>
+            <div className="category-header">
+              <h3>Bài viết theo danh mục</h3>
+              <div className="category-navigation">
+                <button 
+                  className="nav-arrow"
+                  onClick={() => setCategoryView(categoryView === 'first' ? 'second' : 'first')}
+                  disabled={Object.keys(stats.articlesByCategory).length <= 4}
+                >
+                  {categoryView === 'first' ? '→' : '←'}
+                </button>
+              </div>
+            </div>
             <div className="chart-content">
-              {Object.entries(stats.articlesByCategory).map(([category, count]) => (
-                <div key={category} className="category-bar">
-                  <div className="category-info">
-                    <span className="category-name">{getCategoryDisplayName(category)}</span>
-                    <span className="category-count">{count}</span>
+              {(() => {
+                const categories = Object.entries(stats.articlesByCategory);
+                const displayCategories = categoryView === 'first' 
+                  ? categories.slice(0, 4) 
+                  : categories.slice(4, 8);
+                
+                return displayCategories.map(([category, count]) => (
+                  <div key={category} className="status-item">
+                    <div className="status-info">
+                      <span className={`status-indicator category`}></span>
+                      <span className="status-name">{getCategoryDisplayName(category)}</span>
+                    </div>
+                    <span className="status-count">{count}</span>
                   </div>
-                  <div className="bar-container">
-                    <div 
-                      className="bar-fill" 
-                      style={{ 
-                        width: `${(count / Math.max(...Object.values(stats.articlesByCategory))) * 100}%` 
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           </div>
 
@@ -266,17 +282,29 @@ export const Dashboard: React.FC = () => {
       <div className="quick-actions">
         <h3>Thao tác nhanh</h3>
         <div className="actions-grid">
-          <button className="action-btn create">
+          <button 
+            className="action-btn create"
+            onClick={() => onNavigateToTab('create-article')}
+          >
             <span className="action-text">Tạo bài viết mới</span>
           </button>
-          <button className="action-btn review">
+          <button 
+            className="action-btn review"
+            onClick={() => onNavigateToTab('feedback')}
+          >
             <span className="action-text">Xem phản hồi chờ xử lý</span>
           </button>
-          <button className="action-btn report">
-            <span className="action-text">Xuất báo cáo</span>
+          <button 
+            className="action-btn report"
+            onClick={() => onNavigateToTab('articles')}
+          >
+            <span className="action-text">Quản lý bài viết</span>
           </button>
-          <button className="action-btn settings">
-            <span className="action-text">Cài đặt hệ thống</span>
+          <button 
+            className="action-btn settings"
+            onClick={() => onNavigateToTab('dashboard')}
+          >
+            <span className="action-text">Tổng quan</span>
           </button>
         </div>
       </div>

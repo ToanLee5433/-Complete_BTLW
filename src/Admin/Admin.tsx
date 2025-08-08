@@ -59,6 +59,10 @@ export const Admin: React.FC = () => {
         if (data.success && data.token) {
           localStorage.setItem('adminToken', data.token);
           localStorage.setItem('isAdmin', 'true');
+          
+          // Trigger custom event để Header cập nhật
+          window.dispatchEvent(new Event('adminLogin'));
+          
           setIsAuthenticated(true);
           return { success: true };
         } else {
@@ -118,7 +122,7 @@ export const Admin: React.FC = () => {
       </nav>
       
       <main className="admin-content">
-        {activeTab === 'dashboard' && <Dashboard />}
+        {activeTab === 'dashboard' && <Dashboard onNavigateToTab={setActiveTab} />}
         {activeTab === 'articles' && <ArticleManagement onViewArticle={setViewingArticleId} />}
         {activeTab === 'create-article' && <CreateArticle />}
         {activeTab === 'feedback' && <FeedbackManagement />}

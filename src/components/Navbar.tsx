@@ -49,7 +49,7 @@ function Navbar() {
         </li>
 
         <li className="menu-item">
-          <a href="https://bocongan.gov.vn/pbgdpl.html" className="no-blue-link">
+          <a href="https://pbgdpl.gov.vn/Pages/Home.aspx" className="no-blue-link">
             Phổ biến, Giáo dục pháp luật
           </a>
         </li>

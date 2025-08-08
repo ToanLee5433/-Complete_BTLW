@@ -87,4 +87,42 @@ public class PublicArticleController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    /**
+     * Search articles by keyword in title and content
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Map<String, Object>> searchArticles(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        try {
+            System.out.println("Search request - keyword: " + keyword + ", page: " + page + ", size: " + size);
+            
+            if (keyword == null || keyword.trim().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+            
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            Page<Article> articlePage = articleService.searchArticles(keyword, pageable);
+            
+            System.out.println("Search results - found: " + articlePage.getTotalElements() + " articles");
+            
+            Map<String, Object> response = Map.of(
+                "articles", articlePage.getContent(),
+                "currentPage", articlePage.getNumber(),
+                "totalItems", articlePage.getTotalElements(),
+                "totalPages", articlePage.getTotalPages(),
+                "pageSize", articlePage.getSize(),
+                "keyword", keyword
+            );
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Search error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

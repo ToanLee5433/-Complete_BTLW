@@ -15,6 +15,7 @@ import BannerStrip from "./components/BannerStrip";
 import Admin from "./Admin/Admin";
 import UserFeedback from "./components/UserFeedback";
 import ArticleDetail from "./components/ArticleDetail";
+import SearchResults from "./pages/SearchResults";
 
 import BaiViet1BoCongAn from "./pages/tin-tuc-su-kien/BaiViet1BoCongAn";
 import BaiViet2BoCongAn from "./pages/tin-tuc-su-kien/BaiViet2BoCongAn";
@@ -57,6 +58,9 @@ function App() {
 
             {/* Trang Phản hồi công dân */}
             <Route path="/phan-hoi" element={<UserFeedback />} />
+
+            {/* Trang kết quả tìm kiếm */}
+            <Route path="/search" element={<SearchResults />} />
 
             {/* Route động cho bài viết theo ID */}
             <Route path="/tin-tuc-su-kien/bai-viet/:id" element={<ArticleDetail />} />

@@ -138,7 +138,7 @@ export default function ArticleDetail({ articleId }: Props) {
         </div>
       )}
 
-      {article.imageUrl && (
+      {/* {article.imageUrl && (
         <div className="article-image">
           <img 
             src={article.imageUrl.startsWith('http') ? article.imageUrl : `http://localhost:8080${article.imageUrl}`} 
@@ -151,7 +151,7 @@ export default function ArticleDetail({ articleId }: Props) {
             }}
           />
         </div>
-      )}
+      )} */}
 
       <div className="article-content">
         <div dangerouslySetInnerHTML={{ __html: article.content }} />

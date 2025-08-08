@@ -31,13 +31,13 @@ type ArticleFromAPI = {
 };
 
 const categoryMapping: Record<string, string> = {
-  'HOAT_DONG_BO_CONG_AN': 'HOẠT ĐỘNG CỦA BỘ CÔNG AN',
-  'HOAT_DONG_CONG_AN_DIA_PHUONG': 'HOẠT ĐỘNG CỦA CÔNG AN ĐỊA PHƯƠNG',
+  'HOAT_DONG_BO_CONG_AN': 'HOẠT ĐỘNG BỘ CÔNG AN',
+  'HOAT_DONG_CONG_AN_DIA_PHUONG': 'HOẠT ĐỘNG CÔNG AN ĐỊA PHƯƠNG',
   'DOI_NGOAI': 'ĐỐI NGOẠI',
-  'AN_NINH_TRAT_TU': 'AN NINH, TRẬT TỰ',
+  'AN_NINH_TRAT_TU': 'AN NINH TRẬT TỰ',
   'PHO_BIEN_GIAO_DUC_PHAP_LUAT': 'PHỔ BIẾN GIÁO DỤC PHÁP LUẬT',
   'CHI_DAO_DIEU_HANH': 'CHỈ ĐẠO ĐIỀU HÀNH',
-  'NGUOI_TOT_VIEC_TOT': 'NGƯỜI TỐT, VIỆC TỐT',
+  'NGUOI_TOT_VIEC_TOT': 'NGƯỜI TỐT VIỆC TỐT',
   'HOAT_DONG_XA_HOI': 'HOẠT ĐỘNG XÃ HỘI',
 };
 
@@ -67,6 +67,7 @@ export default function CategorySection() {
   const fetchArticles = async () => {
     try {
       setLoading(true);
+      console.log('Fetching articles from API...'); // Debug log
       const response = await fetch('http://localhost:8080/api/public/articles?page=0&size=50', {
         method: 'GET',
         headers: {
@@ -80,6 +81,7 @@ export default function CategorySection() {
         console.log('API Response:', data); // Debug log
         const articles: ArticleFromAPI[] = data.articles || [];
         console.log('Articles from API:', articles); // Debug log
+        console.log('Number of articles:', articles.length); // Debug log
         
         // Group articles by category
         const grouped: Record<string, Article[]> = {};
@@ -87,11 +89,13 @@ export default function CategorySection() {
         // Initialize with existing categories
         Object.keys(categories).forEach(category => {
           grouped[category] = [...categories[category]];
+          console.log(`Initialized category: ${category}`); // Debug log
         });
 
         // Add new articles from API to the beginning, but keep original articles
         articles.forEach(article => {
           const categoryName = categoryMapping[article.category];
+          console.log(`Processing article: ${article.title}, category: ${article.category} -> ${categoryName}`); // Debug log
           if (categoryName && grouped[categoryName]) {
             // Add new articles to the beginning of existing articles
             grouped[categoryName].unshift({
@@ -100,10 +104,16 @@ export default function CategorySection() {
               id: article.id,
               isFromAPI: true
             });
+            console.log(`Added article to category ${categoryName}`); // Debug log
+          } else {
+            console.log(`Category ${categoryName} not found in grouped categories`); // Debug log
           }
         });
 
+        console.log('Final grouped categories:', grouped); // Debug log
         setDynamicCategories(grouped);
+      } else {
+        console.error('API response not OK:', response.status);
       }
     } catch (error) {
       console.error('Error fetching articles:', error);

@@ -118,4 +118,9 @@ public class ArticleService {
         articleRepository.deleteById(id);
     }
 
+    public Page<Article> searchArticles(String keyword, Pageable pageable) {
+        // Sử dụng custom query để tránh lỗi CLOB với case-insensitive search
+        return articleRepository.searchByKeyword(keyword, pageable);
+    }
+
 }

@@ -32,13 +32,13 @@ export const EditArticle: React.FC<EditArticleProps> = ({ articleId, onClose, on
   const [message, setMessage] = useState('');
 
   const categories = [
-    { value: 'HOAT_DONG_BO_CONG_AN', label: 'Hoạt động của Bộ Công an' },
-    { value: 'HOAT_DONG_CONG_AN_DIA_PHUONG', label: 'Hoạt động của Công an địa phương' },
+    { value: 'HOAT_DONG_BO_CONG_AN', label: 'Hoạt động Bộ Công an' },
+    { value: 'HOAT_DONG_CONG_AN_DIA_PHUONG', label: 'Hoạt động Công an địa phương' },
     { value: 'DOI_NGOAI', label: 'Đối ngoại' },
-    { value: 'AN_NINH_TRAT_TU', label: 'An ninh, trật tự' },
+    { value: 'AN_NINH_TRAT_TU', label: 'An ninh trật tự' },
     { value: 'PHO_BIEN_GIAO_DUC_PHAP_LUAT', label: 'Phổ biến giáo dục pháp luật' },
     { value: 'CHI_DAO_DIEU_HANH', label: 'Chỉ đạo điều hành' },
-    { value: 'NGUOI_TOT_VIEC_TOT', label: 'Người tốt, việc tốt' },
+    { value: 'NGUOI_TOT_VIEC_TOT', label: 'Người tốt việc tốt' },
     { value: 'HOAT_DONG_XA_HOI', label: 'Hoạt động xã hội' }
   ];
 
